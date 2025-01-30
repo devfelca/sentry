@@ -8,7 +8,7 @@ import {getAggregateStatus} from './utils/getAggregateStatus';
 import {getTickStyle} from './utils/getTickStyle';
 import {mergeBuckets} from './utils/mergeBuckets';
 import {CheckInTooltip} from './checkInTooltip';
-import type {CheckInBucket, TickStyle, TimeWindowConfig} from './types';
+import type {CheckInBucket, JobTickData, TickStyle, TimeWindowConfig} from './types';
 
 interface CheckInTimelineConfig<Status extends string> {
   /**
@@ -25,6 +25,7 @@ interface CheckInTimelineConfig<Status extends string> {
    */
   statusStyle: Record<Status, TickStyle>;
   timeWindowConfig: TimeWindowConfig;
+  jobTicks?: Array<JobTickData<Status>>;
 }
 
 export interface CheckInTimelineProps<Status extends string>
@@ -50,19 +51,23 @@ export function CheckInTimeline<Status extends string>({
   statusLabel,
   statusStyle,
   statusPrecedent,
+  jobTicks: propsJobTicks,
 }: CheckInTimelineProps<Status>) {
   const {start, end, timelineWidth} = timeWindowConfig;
 
   const elapsedMs = end.getTime() - start.getTime();
   const msPerPixel = elapsedMs / timelineWidth;
 
-  const jobTicks = mergeBuckets(statusPrecedent, bucketedData);
+  const jobTicks = propsJobTicks ?? mergeBuckets(statusPrecedent, bucketedData);
+
+  console.log({jobTicks});
 
   return (
     <TimelineContainer>
       {jobTicks.map(jobTick => {
         const {startTs, width: tickWidth, stats, roundedLeft, roundedRight} = jobTick;
         const timestampMs = startTs * 1000;
+        console.log(timestampMs);
         const left = getBucketedCheckInsPosition(timestampMs, start, msPerPixel);
         const status = getAggregateStatus(statusPrecedent, stats)!;
 

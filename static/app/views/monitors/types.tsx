@@ -31,6 +31,12 @@ export enum CheckInStatus {
   UNKNOWN = 'unknown',
 }
 
+export enum UptimeCheckInStatus {
+  FAILURE = 'failure',
+  SUCCESS = 'success',
+  MISSED_WINDOW = 'missed_window',
+}
+
 interface BaseConfig {
   /**
    * How long (in minutes) after the expected check-in time will we wait until
@@ -188,6 +194,14 @@ type StatsBucket = {
 type MonitorBucketEnvMapping = Record<string, StatsBucket>;
 
 export type MonitorBucket = [timestamp: number, envData: MonitorBucketEnvMapping];
+
+interface UptimeStatsBucket {
+  [UptimeCheckInStatus.FAILURE]: number;
+  [UptimeCheckInStatus.SUCCESS]: number;
+  [UptimeCheckInStatus.MISSED_WINDOW]: number;
+}
+
+export type UptimeBucket = [timestamp: number, bucket: UptimeStatsBucket];
 
 /**
  * Object used to store config for the display next to an environment in the

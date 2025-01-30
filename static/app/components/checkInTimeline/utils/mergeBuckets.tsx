@@ -5,7 +5,7 @@ import {getAggregateStatusFromMultipleBuckets} from './getAggregateStatusFromMul
 import {isStatsBucketEmpty} from './isStatsBucketEmpty';
 import {mergeStats} from './mergeStats';
 
-function generateJobTickFromBucketWithStats<Status extends string>(
+export function generateJobTickFromBucketWithStats<Status extends string>(
   bucket: CheckInStats<Status>,
   options?: Partial<JobTickData<Status>>
 ) {
@@ -77,9 +77,11 @@ export function mergeBuckets<Status extends string>(
       currentJobTick.roundedRight = true;
       jobTicks.push(currentJobTick);
     }
-
+    console.log({currentJobTick});
     return currentJobTick;
   }, null);
+
+  console.log(jobTicks);
 
   return jobTicks;
 }

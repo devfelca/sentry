@@ -15,6 +15,7 @@ import type {Project} from 'sentry/types/project';
 import {getConfigForIssueType} from 'sentry/utils/issueTypeConfig';
 import {useLocation} from 'sentry/utils/useLocation';
 import {useNavigate} from 'sentry/utils/useNavigate';
+import {CheckInGraph} from 'sentry/views/issueDetails/streamline/checkInGraph';
 import {EventGraph} from 'sentry/views/issueDetails/streamline/eventGraph';
 import {
   EventSearch,
@@ -84,7 +85,7 @@ export function EventDetailsHeader({group, event, project}: EventDetailsHeaderPr
         )}
         {issueTypeConfig.header.graph.enabled && (
           <GraphSection>
-            <EventGraph event={event} group={group} style={{flex: 1}} />
+            <IssueGraph group={group} event={event} project={project} />
             {issueTypeConfig.header.tagDistribution.enabled && (
               <Fragment>
                 <SectionDivider />
@@ -144,6 +145,20 @@ function EnvironmentSelector({group, event, project}: EventDetailsHeaderProps) {
       }}
     />
   );
+}
+
+function IssueGraph({group, event, project}: EventDetailsHeaderProps) {
+  const issueTypeConfig = getConfigForIssueType(group, project);
+
+  switch (issueTypeConfig.header.graph.type) {
+    case 'checkin-timeline':
+      return (
+        <CheckInGraph event={event} group={group} project={project} style={{flex: 1}} />
+      );
+    case 'discover-events':
+    default:
+      return <EventGraph event={event} group={group} style={{flex: 1}} />;
+  }
 }
 
 const FilterContainer = styled('div')<{

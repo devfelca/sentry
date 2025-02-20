@@ -436,6 +436,8 @@ export default typescript.config([
 
       // migrated from biome
       '@typescript-eslint/prefer-optional-chain': 'error',
+      '@typescript-eslint/consistent-type-exports': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
 
       // Customization
       '@typescript-eslint/no-unused-vars': [

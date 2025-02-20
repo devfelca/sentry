@@ -149,8 +149,8 @@ export default typescript.config([
 
         // https://typescript-eslint.io/packages/parser/#projectservice
         // `projectService` is recommended, but slower, with our current tsconfig files.
-        // projectService: true,
-        // tsconfigRootDir: import.meta.dirname,
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     linterOptions: {
@@ -433,6 +433,9 @@ export default typescript.config([
       '@typescript-eslint/consistent-indexed-object-style': 'off', // TODO(ryan953): Fix violations and delete this line
       '@typescript-eslint/consistent-type-definitions': 'off', // TODO(ryan953): Fix violations and delete this line
       '@typescript-eslint/no-empty-function': 'off', // TODO(ryan953): Fix violations and delete this line
+
+      // migrated from biome
+      '@typescript-eslint/prefer-optional-chain': 'error',
 
       // Customization
       '@typescript-eslint/no-unused-vars': [

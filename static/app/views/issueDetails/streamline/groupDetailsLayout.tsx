@@ -3,10 +3,10 @@ import styled from '@emotion/styled';
 
 import * as Layout from 'sentry/components/layouts/thirds';
 import {
-  IssueDetailsQuestContext,
-  useIssueDetailsQuestReducer,
-} from 'sentry/components/quests/issueDetails';
-import {QuestBlurContainer} from 'sentry/components/quests/styles';
+  IssueDetailsTourContext,
+  useIssueDetailsTourReducer,
+} from 'sentry/components/tours/issueDetails';
+import {TourBlurContainer} from 'sentry/components/tours/styles';
 import {space} from 'sentry/styles/space';
 import type {Event} from 'sentry/types/event';
 import type {Group} from 'sentry/types/group';
@@ -39,7 +39,7 @@ export function GroupDetailsLayout({
 }: GroupDetailsLayoutProps) {
   const theme = useTheme();
   const {issueDetails, dispatch: issueDetailsDispatch} = useIssueDetailsReducer();
-  const {quest, dispatch: questDispatch} = useIssueDetailsQuestReducer();
+  const {tour, dispatch: tourDispatch} = useIssueDetailsTourReducer();
   const isScreenSmall = useMedia(`(max-width: ${theme.breakpoints.large})`);
   const shouldDisplaySidebar = issueDetails.isSidebarOpen || isScreenSmall;
   const issueTypeConfig = getConfigForIssueType(group, group.project);
@@ -51,8 +51,8 @@ export function GroupDetailsLayout({
     <IssueDetailsContext.Provider
       value={{...issueDetails, dispatch: issueDetailsDispatch}}
     >
-      <IssueDetailsQuestContext.Provider value={{quest, dispatch: questDispatch}}>
-        <QuestBlurContainer>
+      <IssueDetailsTourContext.Provider value={{tour, dispatch: tourDispatch}}>
+        <TourBlurContainer>
           <StreamlinedGroupHeader
             group={group}
             event={event ?? null}
@@ -78,8 +78,8 @@ export function GroupDetailsLayout({
               <StreamlinedSidebar group={group} event={event} project={project} />
             ) : null}
           </StyledLayoutBody>
-        </QuestBlurContainer>
-      </IssueDetailsQuestContext.Provider>
+        </TourBlurContainer>
+      </IssueDetailsTourContext.Provider>
     </IssueDetailsContext.Provider>
   );
 }

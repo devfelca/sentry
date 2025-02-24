@@ -12,12 +12,12 @@ import ErrorLevel from 'sentry/components/events/errorLevel';
 import {getBadgeProperties} from 'sentry/components/group/inboxBadges/statusBadge';
 import UnhandledTag from 'sentry/components/group/inboxBadges/unhandledTag';
 import Link from 'sentry/components/links/link';
-import {
-  IssueDetailsQuestLine,
-  type IssueDetailsQuestStep,
-  useIssueDetailsQuest,
-} from 'sentry/components/quests/issueDetails';
 import {Tooltip} from 'sentry/components/tooltip';
+import {
+  IssueDetailsTour,
+  type IssueDetailsTourStep,
+  useIssueDetailsTour,
+} from 'sentry/components/tours/issueDetails';
 import {IconInfo, IconStar} from 'sentry/icons';
 import {t} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
@@ -58,7 +58,7 @@ export default function StreamlinedGroupHeader({
   const location = useLocation();
   const organization = useOrganization();
   const {baseUrl} = useGroupDetailsRoute();
-  const {quest, dispatch: questDispatch} = useIssueDetailsQuest();
+  const {tour, dispatch: tourDispatch} = useIssueDetailsTour();
   const {sort: _sort, ...query} = location.query;
   const {count: eventCount, userCount} = group;
   const {title: primaryTitle, subtitle} = getTitle(group);
@@ -72,8 +72,8 @@ export default function StreamlinedGroupHeader({
   const statusProps = getBadgeProperties(group.status, group.substatus);
   const issueTypeConfig = getConfigForIssueType(group, project);
 
-  const firstStep: IssueDetailsQuestStep = {
-    key: IssueDetailsQuestLine.ISSUE_DETAILS_HEADER,
+  const firstStep: IssueDetailsTourStep = {
+    key: IssueDetailsTour.ISSUE_DETAILS_HEADER,
     title: 'Issue Details Header',
     description: 'This is the first step of the issue details quest.',
     focusedElement: () => <div>This is the first step of the issue details quest.</div>,
@@ -112,15 +112,15 @@ export default function StreamlinedGroupHeader({
               size="xs"
               icon={<IconStar />}
               onClick={() => {
-                if (quest.currentStep === null) {
-                  questDispatch({
-                    type: 'START_QUEST',
+                if (tour.currentStep === null) {
+                  tourDispatch({
+                    type: 'START_TOUR',
                     step: firstStep,
                   });
                 }
               }}
             >
-              {t('Start Quest')}
+              {t('Start Tour')}
             </Button>
             {!hasOnlyOneUIOption && (
               <LinkButton

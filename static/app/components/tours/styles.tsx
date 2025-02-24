@@ -2,23 +2,23 @@ import {Fragment} from 'react';
 import styled from '@emotion/styled';
 
 import {Button} from 'sentry/components/button';
-import {useIssueDetailsQuest} from 'sentry/components/quests/issueDetails';
+import {useIssueDetailsTour} from 'sentry/components/tours/issueDetails';
 import {IconClose} from 'sentry/icons';
 import {t} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
 
-export function QuestBlurContainer({children}: {children: React.ReactNode}) {
-  const {quest, dispatch: questDispatch} = useIssueDetailsQuest();
-  const isQuestActive = quest.currentStep !== null;
+export function TourBlurContainer({children}: {children: React.ReactNode}) {
+  const {tour, dispatch: tourDispatch} = useIssueDetailsTour();
+  const isTourActive = tour.currentStep !== null;
 
   return (
     <Fragment>
       <BlurContainer>
         {children}
-        {isQuestActive && <BlurWindow />}
-        {isQuestActive && (
+        {isTourActive && <BlurWindow />}
+        {isTourActive && (
           <CompleteQuestButton
-            onClick={() => questDispatch({type: 'COMPLETE_QUEST'})}
+            onClick={() => tourDispatch({type: 'END_TOUR'})}
             icon={<IconClose />}
             aria-label={t('Close')}
             borderless

@@ -1,13 +1,13 @@
 import {createContext, type Dispatch, useContext} from 'react';
 
 import {
-  type QuestAction,
-  type QuestState,
-  type QuestStep,
-  useQuestReducer,
-} from 'sentry/components/quests/questContext';
+  type TourAction,
+  type TourState,
+  type TourStep,
+  useTourReducer,
+} from 'sentry/components/tours/tourContext';
 
-export const enum IssueDetailsQuestLine {
+export const enum IssueDetailsTour {
   /** Onboarding for issue name, type, culprit, message, area */
   ISSUE_DETAILS_HEADER = 'issue-details-header',
   /** Onboarding for workflow actions; resolution, archival, assignment, priority, etc. */
@@ -22,30 +22,30 @@ export const enum IssueDetailsQuestLine {
   ISSUE_DETAILS_EVENT_DETAILS = 'issue-details-event-details',
 }
 
-export type IssueDetailsQuestStep = QuestStep<IssueDetailsQuestLine>;
-export type IssueDetailsQuestState = QuestState<IssueDetailsQuestLine>;
-export type IssueDetailsQuestAction = QuestAction<IssueDetailsQuestLine>;
+export type IssueDetailsTourStep = TourStep<IssueDetailsTour>;
+export type IssueDetailsTourState = TourState<IssueDetailsTour>;
+export type IssueDetailsTourAction = TourAction<IssueDetailsTour>;
 
-const initialState: IssueDetailsQuestState = {
+const initialState: IssueDetailsTourState = {
   currentStep: null,
   isAvailable: true, // TODO: Check a flag in the organization to enable the quest
   isComplete: false,
 };
 
-export function useIssueDetailsQuestReducer() {
-  return useQuestReducer<IssueDetailsQuestLine>({initialState});
+export function useIssueDetailsTourReducer() {
+  return useTourReducer<IssueDetailsTour>({initialState});
 }
 
-export interface IssueDetailsQuestContextType {
-  dispatch: Dispatch<IssueDetailsQuestAction>;
-  quest: IssueDetailsQuestState;
+export interface IssueDetailsTourContextType {
+  dispatch: Dispatch<IssueDetailsTourAction>;
+  tour: IssueDetailsTourState;
 }
 
-export const IssueDetailsQuestContext = createContext<IssueDetailsQuestContextType>({
-  quest: initialState,
+export const IssueDetailsTourContext = createContext<IssueDetailsTourContextType>({
+  tour: initialState,
   dispatch: () => {},
 });
 
-export function useIssueDetailsQuest(): IssueDetailsQuestContextType {
-  return useContext(IssueDetailsQuestContext);
+export function useIssueDetailsTour(): IssueDetailsTourContextType {
+  return useContext(IssueDetailsTourContext);
 }

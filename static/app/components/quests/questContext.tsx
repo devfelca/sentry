@@ -71,13 +71,11 @@ export interface QuestState<T extends QuestEnumType> {
   isComplete: boolean;
 }
 
-export function useQuestReducer<T extends QuestEnumType>(): QuestContextType<T> {
-  const initialState: QuestState<T> = {
-    currentStep: null,
-    isAvailable: false,
-    isComplete: false,
-  };
-
+export function useQuestReducer<T extends QuestEnumType>({
+  initialState,
+}: {
+  initialState: QuestState<T>;
+}): QuestContextType<T> {
   const reducer: Reducer<QuestState<T>, QuestAction<T>> = useCallback((state, action) => {
     switch (action.type) {
       case 'START_QUEST':
@@ -95,14 +93,15 @@ export function useQuestReducer<T extends QuestEnumType>(): QuestContextType<T> 
     }
   }, []);
 
-  const [questState, dispatch] = useReducer(reducer, initialState);
+  const [quest, dispatch] = useReducer(reducer, initialState);
 
   return {
-    ...questState,
+    quest,
     dispatch,
   };
 }
 
-export interface QuestContextType<T extends QuestEnumType> extends QuestState<T> {
+export interface QuestContextType<T extends QuestEnumType> {
   dispatch: Dispatch<QuestAction<T>>;
+  quest: QuestState<T>;
 }

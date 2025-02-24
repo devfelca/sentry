@@ -2,6 +2,11 @@ import {useTheme} from '@emotion/react';
 import styled from '@emotion/styled';
 
 import * as Layout from 'sentry/components/layouts/thirds';
+import {
+  IssueDetailsQuestContext,
+  useIssueDetailsQuestReducer,
+} from 'sentry/components/quests/issueDetails';
+import {QuestBlurContainer} from 'sentry/components/quests/styles';
 import {space} from 'sentry/styles/space';
 import type {Event} from 'sentry/types/event';
 import type {Group} from 'sentry/types/group';
@@ -33,7 +38,8 @@ export function GroupDetailsLayout({
   children,
 }: GroupDetailsLayoutProps) {
   const theme = useTheme();
-  const {issueDetails, dispatch} = useIssueDetailsReducer();
+  const {issueDetails, dispatch: issueDetailsDispatch} = useIssueDetailsReducer();
+  const {quest, dispatch: questDispatch} = useIssueDetailsQuestReducer();
   const isScreenSmall = useMedia(`(max-width: ${theme.breakpoints.large})`);
   const shouldDisplaySidebar = issueDetails.isSidebarOpen || isScreenSmall;
   const issueTypeConfig = getConfigForIssueType(group, group.project);
@@ -42,32 +48,38 @@ export function GroupDetailsLayout({
   const hasFilterBar = issueTypeConfig.header.filterBar.enabled;
 
   return (
-    <IssueDetailsContext.Provider value={{...issueDetails, dispatch}}>
-      <StreamlinedGroupHeader
-        group={group}
-        event={event ?? null}
-        project={project}
-        groupReprocessingStatus={groupReprocessingStatus}
-      />
-      <StyledLayoutBody
-        data-test-id="group-event-details"
-        sidebarOpen={issueDetails.isSidebarOpen}
-      >
-        <div>
-          <EventDetailsHeader event={event} group={group} project={project} />
-          <GroupContent>
-            <NavigationSidebarWrapper hasToggleSidebar={!hasFilterBar}>
-              <IssueEventNavigation event={event} group={group} />
-              {/* Since the event details header is disabled, display the sidebar toggle here */}
-              {!hasFilterBar && <ToggleSidebar size="sm" />}
-            </NavigationSidebarWrapper>
-            <ContentPadding>{children}</ContentPadding>
-          </GroupContent>
-        </div>
-        {shouldDisplaySidebar ? (
-          <StreamlinedSidebar group={group} event={event} project={project} />
-        ) : null}
-      </StyledLayoutBody>
+    <IssueDetailsContext.Provider
+      value={{...issueDetails, dispatch: issueDetailsDispatch}}
+    >
+      <IssueDetailsQuestContext.Provider value={{quest, dispatch: questDispatch}}>
+        <QuestBlurContainer>
+          <StreamlinedGroupHeader
+            group={group}
+            event={event ?? null}
+            project={project}
+            groupReprocessingStatus={groupReprocessingStatus}
+          />
+          <StyledLayoutBody
+            data-test-id="group-event-details"
+            sidebarOpen={issueDetails.isSidebarOpen}
+          >
+            <div>
+              <EventDetailsHeader event={event} group={group} project={project} />
+              <GroupContent>
+                <NavigationSidebarWrapper hasToggleSidebar={!hasFilterBar}>
+                  <IssueEventNavigation event={event} group={group} />
+                  {/* Since the event details header is disabled, display the sidebar toggle here */}
+                  {!hasFilterBar && <ToggleSidebar size="sm" />}
+                </NavigationSidebarWrapper>
+                <ContentPadding>{children}</ContentPadding>
+              </GroupContent>
+            </div>
+            {shouldDisplaySidebar ? (
+              <StreamlinedSidebar group={group} event={event} project={project} />
+            ) : null}
+          </StyledLayoutBody>
+        </QuestBlurContainer>
+      </IssueDetailsQuestContext.Provider>
     </IssueDetailsContext.Provider>
   );
 }

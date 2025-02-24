@@ -4,7 +4,7 @@ import Color from 'color';
 
 import GuideAnchor from 'sentry/components/assistant/guideAnchor';
 import {Breadcrumbs} from 'sentry/components/breadcrumbs';
-import {LinkButton} from 'sentry/components/button';
+import {Button, LinkButton} from 'sentry/components/button';
 import ButtonBar from 'sentry/components/buttonBar';
 import {Flex} from 'sentry/components/container/flex';
 import Count from 'sentry/components/count';
@@ -12,8 +12,13 @@ import ErrorLevel from 'sentry/components/events/errorLevel';
 import {getBadgeProperties} from 'sentry/components/group/inboxBadges/statusBadge';
 import UnhandledTag from 'sentry/components/group/inboxBadges/unhandledTag';
 import Link from 'sentry/components/links/link';
+import {
+  IssueDetailsQuestLine,
+  type IssueDetailsQuestStep,
+  useIssueDetailsQuest,
+} from 'sentry/components/quests/issueDetails';
 import {Tooltip} from 'sentry/components/tooltip';
-import {IconInfo} from 'sentry/icons';
+import {IconInfo, IconStar} from 'sentry/icons';
 import {t} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
 import type {Event} from 'sentry/types/event';
@@ -53,6 +58,7 @@ export default function StreamlinedGroupHeader({
   const location = useLocation();
   const organization = useOrganization();
   const {baseUrl} = useGroupDetailsRoute();
+  const {quest, dispatch: questDispatch} = useIssueDetailsQuest();
   const {sort: _sort, ...query} = location.query;
   const {count: eventCount, userCount} = group;
   const {title: primaryTitle, subtitle} = getTitle(group);
@@ -65,6 +71,15 @@ export default function StreamlinedGroupHeader({
 
   const statusProps = getBadgeProperties(group.status, group.substatus);
   const issueTypeConfig = getConfigForIssueType(group, project);
+
+  const firstStep: IssueDetailsQuestStep = {
+    key: IssueDetailsQuestLine.ISSUE_DETAILS_HEADER,
+    title: 'Issue Details Header',
+    description: 'This is the first step of the issue details quest.',
+    focusedElement: () => <div>This is the first step of the issue details quest.</div>,
+    nextStep: null,
+    previousStep: null,
+  };
 
   const hasOnlyOneUIOption = defined(organization.streamlineOnly);
   const [showLearnMore, setShowLearnMore] = useLocalStorageState(
@@ -93,6 +108,20 @@ export default function StreamlinedGroupHeader({
             />
           </Flex>
           <ButtonBar gap={0.5}>
+            <Button
+              size="xs"
+              icon={<IconStar />}
+              onClick={() => {
+                if (quest.currentStep === null) {
+                  questDispatch({
+                    type: 'START_QUEST',
+                    step: firstStep,
+                  });
+                }
+              }}
+            >
+              {t('Start Quest')}
+            </Button>
             {!hasOnlyOneUIOption && (
               <LinkButton
                 size="xs"

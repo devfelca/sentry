@@ -26,18 +26,23 @@ export type IssueDetailsQuestStep = QuestStep<IssueDetailsQuestLine>;
 export type IssueDetailsQuestState = QuestState<IssueDetailsQuestLine>;
 export type IssueDetailsQuestAction = QuestAction<IssueDetailsQuestLine>;
 
+const initialState: IssueDetailsQuestState = {
+  currentStep: null,
+  isAvailable: true, // TODO: Check a flag in the organization to enable the quest
+  isComplete: false,
+};
+
 export function useIssueDetailsQuestReducer() {
-  return useQuestReducer<IssueDetailsQuestLine>();
+  return useQuestReducer<IssueDetailsQuestLine>({initialState});
 }
 
-export interface IssueDetailsQuestContextType extends IssueDetailsQuestState {
+export interface IssueDetailsQuestContextType {
   dispatch: Dispatch<IssueDetailsQuestAction>;
+  quest: IssueDetailsQuestState;
 }
 
 export const IssueDetailsQuestContext = createContext<IssueDetailsQuestContextType>({
-  currentStep: null,
-  isAvailable: false,
-  isComplete: false,
+  quest: initialState,
   dispatch: () => {},
 });
 

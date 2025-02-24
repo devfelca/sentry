@@ -1,4 +1,4 @@
-import {Fragment} from 'react';
+import {Fragment, useMemo} from 'react';
 import styled from '@emotion/styled';
 import Color from 'color';
 
@@ -15,9 +15,9 @@ import Link from 'sentry/components/links/link';
 import {Tooltip} from 'sentry/components/tooltip';
 import {
   IssueDetailsTour,
-  type IssueDetailsTourStep,
   useIssueDetailsTour,
 } from 'sentry/components/tours/issueDetails';
+import {type TourStep, useTourStep} from 'sentry/components/tours/tourContext';
 import {IconInfo, IconStar} from 'sentry/icons';
 import {t} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
@@ -59,6 +59,7 @@ export default function StreamlinedGroupHeader({
   const organization = useOrganization();
   const {baseUrl} = useGroupDetailsRoute();
   const {tour, dispatch: tourDispatch} = useIssueDetailsTour();
+
   const {sort: _sort, ...query} = location.query;
   const {count: eventCount, userCount} = group;
   const {title: primaryTitle, subtitle} = getTitle(group);
@@ -72,14 +73,51 @@ export default function StreamlinedGroupHeader({
   const statusProps = getBadgeProperties(group.status, group.substatus);
   const issueTypeConfig = getConfigForIssueType(group, project);
 
-  const firstStep: IssueDetailsTourStep = {
-    key: IssueDetailsTour.ISSUE_DETAILS_HEADER,
-    title: 'Issue Details Header',
-    description: 'This is the first step of the issue details quest.',
-    focusedElement: () => <div>This is the first step of the issue details quest.</div>,
+  const actionBar = useMemo(() => {
+    return (
+      <ActionBar isComplete={isComplete} role="banner">
+        <GroupActions
+          group={group}
+          project={project}
+          disabled={disableActions}
+          event={event}
+        />
+        <WorkflowActions>
+          <Workflow>
+            {t('Priority')}
+            <GroupPriority group={group} />
+          </Workflow>
+          <GuideAnchor target="issue_sidebar_owners" position="left">
+            <Workflow>
+              {t('Assignee')}
+              <GroupHeaderAssigneeSelector
+                group={group}
+                project={project}
+                event={event}
+              />
+            </Workflow>
+          </GuideAnchor>
+        </WorkflowActions>
+      </ActionBar>
+    );
+  }, [event, group, project, disableActions, isComplete]);
+
+  const firstStep: TourStep<IssueDetailsTour> = {
+    id: IssueDetailsTour.ISSUE_DETAILS_HEADER,
+    title: t('Narrow your focus'),
+    description: t(
+      'Filtering events to a specific user, tag value, environment, or timeframe can speed up debugging and identifying the root cause.'
+    ),
     nextStep: null,
     previousStep: null,
   };
+
+  const {renderElement: renderTourActionBar} = useTourStep<IssueDetailsTour>({
+    focusedElement: actionBar,
+    step: firstStep,
+    state: tour,
+    dispatch: tourDispatch,
+  });
 
   const hasOnlyOneUIOption = defined(organization.streamlineOnly);
   const [showLearnMore, setShowLearnMore] = useLocalStorageState(
@@ -221,30 +259,7 @@ export default function StreamlinedGroupHeader({
           )}
         </HeaderGrid>
       </Header>
-      <ActionBar isComplete={isComplete} role="banner">
-        <GroupActions
-          group={group}
-          project={project}
-          disabled={disableActions}
-          event={event}
-        />
-        <WorkflowActions>
-          <Workflow>
-            {t('Priority')}
-            <GroupPriority group={group} />
-          </Workflow>
-          <GuideAnchor target="issue_sidebar_owners" position="left">
-            <Workflow>
-              {t('Assignee')}
-              <GroupHeaderAssigneeSelector
-                group={group}
-                project={project}
-                event={event}
-              />
-            </Workflow>
-          </GuideAnchor>
-        </WorkflowActions>
-      </ActionBar>
+      {renderTourActionBar()}
     </Fragment>
   );
 }

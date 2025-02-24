@@ -1,9 +1,8 @@
-import {createContext, type Dispatch, useContext} from 'react';
+import {createContext, useContext} from 'react';
 
 import {
-  type TourAction,
+  type TourContextType,
   type TourState,
-  type TourStep,
   useTourReducer,
 } from 'sentry/components/tours/tourContext';
 
@@ -22,30 +21,44 @@ export const enum IssueDetailsTour {
   ISSUE_DETAILS_EVENT_DETAILS = 'issue-details-event-details',
 }
 
-export type IssueDetailsTourStep = TourStep<IssueDetailsTour>;
-export type IssueDetailsTourState = TourState<IssueDetailsTour>;
-export type IssueDetailsTourAction = TourAction<IssueDetailsTour>;
-
-const initialState: IssueDetailsTourState = {
-  currentStep: null,
-  isAvailable: true, // TODO: Check a flag in the organization to enable the quest
-  isComplete: false,
-};
-
-export function useIssueDetailsTourReducer() {
-  return useTourReducer<IssueDetailsTour>({initialState});
+export function useIssueDetailsTourReducer({
+  initialState,
+}: {
+  initialState: TourState<IssueDetailsTour>;
+}) {
+  return useTourReducer<IssueDetailsTour>({
+    initialState,
+    allStepIds: [
+      IssueDetailsTour.ISSUE_DETAILS_HEADER,
+      IssueDetailsTour.ISSUE_DETAILS_WORKFLOWS,
+      IssueDetailsTour.ISSUE_DETAILS_SIDEBAR,
+      IssueDetailsTour.ISSUE_DETAILS_FILTERS,
+      IssueDetailsTour.ISSUE_DETAILS_TRENDS,
+      IssueDetailsTour.ISSUE_DETAILS_EVENT_DETAILS,
+    ],
+  });
 }
 
-export interface IssueDetailsTourContextType {
-  dispatch: Dispatch<IssueDetailsTourAction>;
-  tour: IssueDetailsTourState;
-}
-
-export const IssueDetailsTourContext = createContext<IssueDetailsTourContextType>({
-  tour: initialState,
+export const IssueDetailsTourContext = createContext<TourContextType<IssueDetailsTour>>({
+  tour: {
+    currentStep: null,
+    currentStepIndex: 0,
+    totalSteps: 0,
+    isAvailable: false,
+    isComplete: false,
+    isRegistered: false,
+  },
   dispatch: () => {},
+  registry: {
+    [IssueDetailsTour.ISSUE_DETAILS_HEADER]: false,
+    [IssueDetailsTour.ISSUE_DETAILS_WORKFLOWS]: false,
+    [IssueDetailsTour.ISSUE_DETAILS_SIDEBAR]: false,
+    [IssueDetailsTour.ISSUE_DETAILS_FILTERS]: false,
+    [IssueDetailsTour.ISSUE_DETAILS_TRENDS]: false,
+    [IssueDetailsTour.ISSUE_DETAILS_EVENT_DETAILS]: false,
+  },
 });
 
-export function useIssueDetailsTour(): IssueDetailsTourContextType {
+export function useIssueDetailsTour(): TourContextType<IssueDetailsTour> {
   return useContext(IssueDetailsTourContext);
 }

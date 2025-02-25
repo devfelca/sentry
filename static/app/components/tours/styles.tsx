@@ -1,4 +1,4 @@
-import {type Dispatch, Fragment} from 'react';
+import {Fragment} from 'react';
 import {ClassNames, useTheme} from '@emotion/react';
 import styled from '@emotion/styled';
 
@@ -6,9 +6,8 @@ import {Button} from 'sentry/components/button';
 import {Hovercard} from 'sentry/components/hovercard';
 import {useIssueDetailsTour} from 'sentry/components/tours/issueDetails';
 import type {
-  TourAction,
+  TourContextType,
   TourEnumType,
-  TourState,
   TourStep,
 } from 'sentry/components/tours/tourContext';
 import {IconClose} from 'sentry/icons';
@@ -32,17 +31,25 @@ export function TourBlurContainer({children}: {children: React.ReactNode}) {
 }
 
 export interface TourElementProps<T extends TourEnumType> {
-  dispatch: Dispatch<TourAction<T>>;
-  state: TourState<T>;
+  children: React.ReactNode;
   step: TourStep<T>;
+  tourContext: TourContextType<T>;
 }
 
 export function TourElement<T extends TourEnumType>({
   children,
-  dispatch,
   step,
-}: TourElementProps<T> & {children: React.ReactNode}) {
+  tourContext,
+}: TourElementProps<T>) {
   const theme = useTheme();
+  const {tour, dispatch} = tourContext;
+  const {orderedStepIds} = tour;
+  const currentStepIndex = tour.currentStep
+    ? orderedStepIds.indexOf(tour.currentStep.id)
+    : -1;
+  const hasPreviousStep = currentStepIndex > 0;
+  const hasNextStep = currentStepIndex < orderedStepIds.length - 1;
+
   return (
     <ClassNames>
       {({css}) => (
@@ -56,7 +63,13 @@ export function TourElement<T extends TourEnumType>({
           body={
             <TourContent>
               <TopRow>
-                <div>2/6</div>
+                <div>
+                  {currentStepIndex > 0 ? (
+                    <span>
+                      {currentStepIndex + 1}/{orderedStepIds.length}
+                    </span>
+                  ) : null}
+                </div>
                 <div>
                   <TourCloseButton
                     onClick={() => dispatch({type: 'END_TOUR'})}
@@ -70,7 +83,7 @@ export function TourElement<T extends TourEnumType>({
               <TitleRow>{step.title}</TitleRow>
               <DescriptionRow>{step.description}</DescriptionRow>
               <ActionRow>
-                {step.previousStep && (
+                {hasPreviousStep && (
                   <ActionButton
                     size="xs"
                     onClick={() => dispatch({type: 'PREVIOUS_STEP'})}
@@ -78,7 +91,7 @@ export function TourElement<T extends TourEnumType>({
                     {t('Previous')}
                   </ActionButton>
                 )}
-                {step.nextStep && (
+                {hasNextStep && (
                   <ActionButton size="xs" onClick={() => dispatch({type: 'NEXT_STEP'})}>
                     {t('Next')}
                   </ActionButton>

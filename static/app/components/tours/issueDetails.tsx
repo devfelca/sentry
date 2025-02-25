@@ -3,6 +3,8 @@ import {createContext, useContext} from 'react';
 import {
   type TourContextType,
   type TourState,
+  type TourStep,
+  useRegisterTourStep,
   useTourReducer,
 } from 'sentry/components/tours/tourContext';
 
@@ -21,44 +23,58 @@ export const enum IssueDetailsTour {
   ISSUE_DETAILS_EVENT_DETAILS = 'issue-details-event-details',
 }
 
-export function useIssueDetailsTourReducer({
-  initialState,
-}: {
-  initialState: TourState<IssueDetailsTour>;
-}) {
+const ORDERED_ISSUE_DETAILS_TOUR_STEP_IDS = [
+  IssueDetailsTour.ISSUE_DETAILS_HEADER,
+  IssueDetailsTour.ISSUE_DETAILS_WORKFLOWS,
+  IssueDetailsTour.ISSUE_DETAILS_SIDEBAR,
+  IssueDetailsTour.ISSUE_DETAILS_FILTERS,
+  IssueDetailsTour.ISSUE_DETAILS_TRENDS,
+  IssueDetailsTour.ISSUE_DETAILS_EVENT_DETAILS,
+];
+
+export function useIssueDetailsTourReducer(
+  initialState: Partial<TourState<IssueDetailsTour>>
+) {
   return useTourReducer<IssueDetailsTour>({
     initialState,
-    allStepIds: [
-      IssueDetailsTour.ISSUE_DETAILS_HEADER,
-      IssueDetailsTour.ISSUE_DETAILS_WORKFLOWS,
-      IssueDetailsTour.ISSUE_DETAILS_SIDEBAR,
-      IssueDetailsTour.ISSUE_DETAILS_FILTERS,
-      IssueDetailsTour.ISSUE_DETAILS_TRENDS,
-      IssueDetailsTour.ISSUE_DETAILS_EVENT_DETAILS,
-    ],
+    orderedStepIds: ORDERED_ISSUE_DETAILS_TOUR_STEP_IDS,
   });
 }
 
 export const IssueDetailsTourContext = createContext<TourContextType<IssueDetailsTour>>({
   tour: {
     currentStep: null,
-    currentStepIndex: 0,
-    totalSteps: 0,
+    orderedStepIds: ORDERED_ISSUE_DETAILS_TOUR_STEP_IDS,
     isAvailable: false,
-    isComplete: false,
+    isActive: false,
     isRegistered: false,
   },
   dispatch: () => {},
   registry: {
-    [IssueDetailsTour.ISSUE_DETAILS_HEADER]: false,
-    [IssueDetailsTour.ISSUE_DETAILS_WORKFLOWS]: false,
-    [IssueDetailsTour.ISSUE_DETAILS_SIDEBAR]: false,
-    [IssueDetailsTour.ISSUE_DETAILS_FILTERS]: false,
-    [IssueDetailsTour.ISSUE_DETAILS_TRENDS]: false,
-    [IssueDetailsTour.ISSUE_DETAILS_EVENT_DETAILS]: false,
+    [IssueDetailsTour.ISSUE_DETAILS_HEADER]: null,
+    [IssueDetailsTour.ISSUE_DETAILS_WORKFLOWS]: null,
+    [IssueDetailsTour.ISSUE_DETAILS_SIDEBAR]: null,
+    [IssueDetailsTour.ISSUE_DETAILS_FILTERS]: null,
+    [IssueDetailsTour.ISSUE_DETAILS_TRENDS]: null,
+    [IssueDetailsTour.ISSUE_DETAILS_EVENT_DETAILS]: null,
   },
 });
 
 export function useIssueDetailsTour(): TourContextType<IssueDetailsTour> {
   return useContext(IssueDetailsTourContext);
+}
+
+export function useRegisterIssueDetailsTourStep({
+  step,
+  focusedElement,
+}: {
+  focusedElement: React.ReactNode;
+  step: TourStep<IssueDetailsTour>;
+}) {
+  const tourContext = useIssueDetailsTour();
+  return useRegisterTourStep<IssueDetailsTour>({
+    focusedElement,
+    step,
+    tourContext,
+  });
 }

@@ -16,8 +16,8 @@ import {Tooltip} from 'sentry/components/tooltip';
 import {
   IssueDetailsTour,
   useIssueDetailsTour,
+  useRegisterIssueDetailsTourStep,
 } from 'sentry/components/tours/issueDetails';
-import {type TourStep, useTourStep} from 'sentry/components/tours/tourContext';
 import {IconInfo, IconStar} from 'sentry/icons';
 import {t} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
@@ -58,7 +58,7 @@ export default function StreamlinedGroupHeader({
   const location = useLocation();
   const organization = useOrganization();
   const {baseUrl} = useGroupDetailsRoute();
-  const {tour, dispatch: tourDispatch} = useIssueDetailsTour();
+  const {dispatch: tourDispatch} = useIssueDetailsTour();
 
   const {sort: _sort, ...query} = location.query;
   const {count: eventCount, userCount} = group;
@@ -102,21 +102,15 @@ export default function StreamlinedGroupHeader({
     );
   }, [event, group, project, disableActions, isComplete]);
 
-  const firstStep: TourStep<IssueDetailsTour> = {
-    id: IssueDetailsTour.ISSUE_DETAILS_HEADER,
-    title: t('Narrow your focus'),
-    description: t(
-      'Filtering events to a specific user, tag value, environment, or timeframe can speed up debugging and identifying the root cause.'
-    ),
-    nextStep: null,
-    previousStep: null,
-  };
-
-  const {renderElement: renderTourActionBar} = useTourStep<IssueDetailsTour>({
+  const {renderElement: renderTourActionBar} = useRegisterIssueDetailsTourStep({
     focusedElement: actionBar,
-    step: firstStep,
-    state: tour,
-    dispatch: tourDispatch,
+    step: {
+      id: IssueDetailsTour.ISSUE_DETAILS_HEADER,
+      title: t('Narrow your focus'),
+      description: t(
+        'Filtering events to a specific user, tag value, environment, or timeframe can speed up debugging and identifying the root cause.'
+      ),
+    },
   });
 
   const hasOnlyOneUIOption = defined(organization.streamlineOnly);
@@ -150,12 +144,7 @@ export default function StreamlinedGroupHeader({
               size="xs"
               icon={<IconStar />}
               onClick={() => {
-                if (tour.currentStep === null) {
-                  tourDispatch({
-                    type: 'START_TOUR',
-                    step: firstStep,
-                  });
-                }
+                tourDispatch({type: 'START_TOUR'});
               }}
             >
               {t('Start Tour')}

@@ -1,4 +1,4 @@
-import {type Dispatch, type Reducer, useCallback, useState} from 'react';
+import {type Dispatch, type Reducer, useCallback, useEffect, useState} from 'react';
 import {useReducer} from 'react';
 
 import {TourElement} from 'sentry/components/tours/styles';
@@ -15,22 +15,14 @@ export interface TourStep<T extends TourEnumType> {
    */
   id: T;
   /**
-   * Next tour step. If null, this will be the final step.
-   */
-  nextStep: TourStep<T> | null;
-  /**
-   * Previous tour step. If null, this is the first step.
-   */
-  previousStep: TourStep<T> | null;
-  /**
    * Title of the tour step.
    */
   title: string;
 }
 
 type TourStartAction<T extends TourEnumType> = {
-  step: TourStep<T>;
   type: 'START_TOUR';
+  stepId?: T;
 };
 type TourNextStepAction = {
   type: 'NEXT_STEP';
@@ -46,7 +38,7 @@ type TourSetCurrentStepAction<T extends TourEnumType> = {
   type: 'SET_CURRENT_STEP';
 };
 type TourRegisterStepAction<T extends TourEnumType> = {
-  stepId: T;
+  step: TourStep<T>;
   type: 'REGISTER_STEP';
 };
 
@@ -64,66 +56,132 @@ export interface TourState<T extends TourEnumType> {
    */
   currentStep: TourStep<T> | null;
   /**
-   * The current step index.
+   * Whether the tour is currently active.
    */
-  currentStepIndex: number;
+  isActive: boolean;
   /**
-   * Whether the tour is available to the user.
+   * Whether the tour is available to the user. Should be set by flags or other conditions.
    */
   isAvailable: boolean;
   /**
-   * Whether the tour has already been completed by the user.
-   */
-  isComplete: boolean;
-  /**
-   * Whether the tour has been completely registered in the DOM.
+   * Whether each step in the tour has been completely registered in the DOM.
    */
   isRegistered: boolean;
   /**
-   * The total number of steps in the tour.
+   * The ordered step IDs. Declared once when the provider is initialized.
    */
-  totalSteps: number;
+  orderedStepIds: readonly T[];
 }
 
 export function useTourReducer<T extends TourEnumType>({
   initialState,
-  allStepIds,
+  orderedStepIds,
 }: {
-  allStepIds: T[];
-  initialState: TourState<T>;
+  initialState: Partial<TourState<T>>;
+  orderedStepIds: T[];
 }): TourContextType<T> {
-  const {registry, setRegistry} = useTourRegistry<T>({allStepIds});
+  const initState = {
+    orderedStepIds,
+    currentStep: null,
+    isAvailable: false,
+    isActive: false,
+    isRegistered: false,
+    ...initialState,
+  };
+  const {registry, setRegistry} = useTourRegistry<T>({stepsIds: orderedStepIds});
   const reducer: Reducer<TourState<T>, TourAction<T>> = useCallback(
     (state, action) => {
+      const completeTourState = {
+        ...state,
+        isActive: false,
+        currentStep: null,
+        currentStepIndex: -1,
+      };
       switch (action.type) {
         case 'REGISTER_STEP':
           // Register the single step
-          setRegistry(prev => ({...prev, [action.stepId]: true}));
+          setRegistry(prev => ({...prev, [action.step.id]: action.step}));
           // If all steps are registered, set the tour as registered
           if (Object.values(registry).every(Boolean)) {
             return {...state, isRegistered: true};
           }
           // If the step is not registered, do nothing
           return state;
-        case 'START_TOUR':
-          // If the tour is not available, do nothing
-          return state.isAvailable ? {...state, currentStep: action.step} : state;
-        case 'NEXT_STEP':
-          return {...state, currentStep: state.currentStep?.nextStep ?? null};
-        case 'PREVIOUS_STEP':
-          return {...state, currentStep: state.currentStep?.previousStep ?? null};
+        case 'START_TOUR': {
+          // If the tour is not available, or all steps are not registered, do nothing
+          if (!state.isAvailable || !state.isRegistered) {
+            return state;
+          }
+          // If the stepId is provided, set the current step to the stepId
+          const startStepIndex = action.stepId
+            ? orderedStepIds.indexOf(action.stepId)
+            : -1;
+          if (action.stepId && startStepIndex !== -1) {
+            return {
+              ...state,
+              currentStep: registry[action.stepId] ?? null,
+              currentStepIndex: startStepIndex,
+            };
+          }
+          // If no stepId is provided, set the current step to the first step
+          if (orderedStepIds[0]) {
+            return {
+              ...state,
+              currentStep: registry[orderedStepIds[0]] ?? null,
+              currentStepIndex: 0,
+            };
+          }
+          return state;
+        }
+        case 'NEXT_STEP': {
+          if (!state.currentStep) {
+            return state;
+          }
+          const nextStepIndex = orderedStepIds.indexOf(state.currentStep.id) + 1;
+          const nextStepId = orderedStepIds[nextStepIndex];
+          if (nextStepId) {
+            return {
+              ...state,
+              currentStep: registry[nextStepId] ?? null,
+              currentStepIndex: nextStepIndex,
+            };
+          }
+          // If there is no next step, complete the tour
+          return completeTourState;
+        }
+        case 'PREVIOUS_STEP': {
+          if (!state.currentStep) {
+            return state;
+          }
+          const prevStepIndex = orderedStepIds.indexOf(state.currentStep.id) - 1;
+          const prevStepId = orderedStepIds[prevStepIndex];
+          if (prevStepId) {
+            return {
+              ...state,
+              currentStep: registry[prevStepId] ?? null,
+              currentStepIndex: prevStepIndex,
+            };
+          }
+          // If there is no previous step, do nothingz
+          return state;
+        }
         case 'END_TOUR':
-          return {...state, currentStep: null, isComplete: true};
-        case 'SET_CURRENT_STEP':
-          return {...state, currentStep: action.step};
+          return completeTourState;
+        case 'SET_CURRENT_STEP': {
+          const setStepIndex = orderedStepIds.indexOf(action.step.id);
+          if (setStepIndex === -1) {
+            return state;
+          }
+          return {...state, currentStep: action.step, currentStepIndex: setStepIndex};
+        }
         default:
           return state;
       }
     },
-    [registry, setRegistry]
+    [registry, setRegistry, orderedStepIds]
   );
 
-  const [tour, dispatch] = useReducer(reducer, initialState);
+  const [tour, dispatch] = useReducer(reducer, initState);
 
   return {
     tour,
@@ -139,38 +197,50 @@ export interface TourContextType<T extends TourEnumType> {
 }
 
 type TourRegistry<T extends TourEnumType> = {
-  [key in T]: boolean;
+  [key in T]: TourStep<T> | null;
 };
 
-export function useTourRegistry<T extends TourEnumType>({allStepIds}: {allStepIds: T[]}) {
+export function useTourRegistry<T extends TourEnumType>({stepsIds}: {stepsIds: T[]}) {
   const [registry, setRegistry] = useState<TourRegistry<T>>(
-    allStepIds.reduce((acc, id) => {
-      acc[id] = false;
-      return acc;
+    stepsIds.reduce((reg, stepId) => {
+      reg[stepId] = null;
+      return reg;
     }, {} as TourRegistry<T>)
   );
   return {registry, setRegistry};
 }
 
-export function useTourStep<T extends TourEnumType>({
+export function useRegisterTourStep<T extends TourEnumType>({
   focusedElement,
   step,
-  state,
-  dispatch,
+  tourContext,
 }: {
-  dispatch: Dispatch<TourAction<T>>;
   focusedElement: React.ReactNode;
-  state: TourState<T>;
   step: TourStep<T>;
-}) {
+  tourContext: TourContextType<T>;
+}): {
+  renderElement: () => React.ReactNode;
+} {
+  // Use the dispatch and tour state from the props context
+  const {tour, dispatch} = tourContext;
+
+  // Register the step in the registry
+  useEffect(() => {
+    dispatch({type: 'REGISTER_STEP', step});
+  }, [step, dispatch]);
+
+  const isActiveStep =
+    tour.isAvailable && tour.isRegistered && tour?.currentStep?.id === step.id;
+
+  // Return a callback that renders the element wrapped if the tour is active, registered and matches the step
   const renderElement = useCallback(() => {
-    return state?.currentStep?.id === step.id ? (
-      <TourElement step={step} dispatch={dispatch} state={state}>
+    return isActiveStep ? (
+      <TourElement step={step} tourContext={tourContext}>
         {focusedElement}
       </TourElement>
     ) : (
       focusedElement
     );
-  }, [focusedElement, step, dispatch, state]);
+  }, [focusedElement, step, tourContext, isActiveStep]);
   return {renderElement};
 }

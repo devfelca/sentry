@@ -40,16 +40,9 @@ export function GroupDetailsLayout({
   const theme = useTheme();
   const {issueDetails, dispatch: issueDetailsDispatch} = useIssueDetailsReducer();
   const tourContext = useIssueDetailsTourReducer({
-    initialState: {
-      currentStep: null,
-      currentStepIndex: 0,
-      totalSteps: 0,
-      // TODO(Leander): Use a flag, something like this:
-      // isAvailable: organization.features.includes('issue-details-tour'),
-      isAvailable: true,
-      isComplete: false,
-      isRegistered: false,
-    },
+    // TODO(Leander): Use a flag, something like this:
+    // isAvailable: organization.features.includes('issue-details-tour'),
+    isAvailable: true,
   });
   const isScreenSmall = useMedia(`(max-width: ${theme.breakpoints.large})`);
   const shouldDisplaySidebar = issueDetails.isSidebarOpen || isScreenSmall;

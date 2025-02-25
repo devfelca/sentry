@@ -1,4 +1,4 @@
-import {Fragment, useMemo} from 'react';
+import {Fragment} from 'react';
 import styled from '@emotion/styled';
 import Color from 'color';
 
@@ -73,44 +73,39 @@ export default function StreamlinedGroupHeader({
   const statusProps = getBadgeProperties(group.status, group.substatus);
   const issueTypeConfig = getConfigForIssueType(group, project);
 
-  const actionBar = useMemo(() => {
-    return (
-      <ActionBar isComplete={isComplete} role="banner">
-        <GroupActions
-          group={group}
-          project={project}
-          disabled={disableActions}
-          event={event}
-        />
-        <WorkflowActions>
+  const actionBar = (
+    <ActionBar isComplete={isComplete} role="banner">
+      <GroupActions
+        group={group}
+        project={project}
+        disabled={disableActions}
+        event={event}
+      />
+      <WorkflowActions>
+        <Workflow>
+          {t('Priority')}
+          <GroupPriority group={group} />
+        </Workflow>
+        <GuideAnchor target="issue_sidebar_owners" position="left">
           <Workflow>
-            {t('Priority')}
-            <GroupPriority group={group} />
+            {t('Assignee')}
+            <GroupHeaderAssigneeSelector group={group} project={project} event={event} />
           </Workflow>
-          <GuideAnchor target="issue_sidebar_owners" position="left">
-            <Workflow>
-              {t('Assignee')}
-              <GroupHeaderAssigneeSelector
-                group={group}
-                project={project}
-                event={event}
-              />
-            </Workflow>
-          </GuideAnchor>
-        </WorkflowActions>
-      </ActionBar>
-    );
-  }, [event, group, project, disableActions, isComplete]);
+        </GuideAnchor>
+      </WorkflowActions>
+    </ActionBar>
+  );
 
   const {element: tourActionBar} = useRegisterIssueDetailsTourStep({
     focusedElement: actionBar,
     step: {
-      id: IssueDetailsTour.ISSUE_DETAILS_HEADER,
-      title: t('Narrow your focus'),
+      id: IssueDetailsTour.ISSUE_DETAILS_WORKFLOWS,
+      title: t('Take action'),
       description: t(
-        'Filtering events to a specific user, tag value, environment, or timeframe can speed up debugging and identifying the root cause.'
+        'Now that you’ve learned about this issue, it’s time to assign an owner, update priority, and take additional actions.'
       ),
     },
+    position: 'bottom-end',
   });
 
   const hasOnlyOneUIOption = defined(organization.streamlineOnly);
@@ -143,9 +138,7 @@ export default function StreamlinedGroupHeader({
             <Button
               size="xs"
               icon={<IconStar />}
-              onClick={() => {
-                tourDispatch({type: 'START_TOUR'});
-              }}
+              onClick={() => tourDispatch({type: 'START_TOUR'})}
             >
               {t('Start Tour')}
             </Button>

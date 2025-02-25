@@ -5,6 +5,11 @@ import GuideAnchor from 'sentry/components/assistant/guideAnchor';
 import ErrorBoundary from 'sentry/components/errorBoundary';
 import * as Layout from 'sentry/components/layouts/thirds';
 import * as SidebarSection from 'sentry/components/sidebarSection';
+import {
+  IssueDetailsTour,
+  useRegisterIssueDetailsTourStep,
+} from 'sentry/components/tours/issueDetails';
+import {t} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
 import type {Event} from 'sentry/types/event';
 import type {Group, TeamParticipant, UserParticipant} from 'sentry/types/group';
@@ -46,7 +51,7 @@ export default function StreamlinedSidebar({group, event, project}: Props) {
   const showPeopleSection = group.participants.length > 0 || viewers.length > 0;
   const issueTypeConfig = getConfigForIssueType(group, group.project);
 
-  return (
+  const sidebarComponent = (
     <Side>
       <GuideAnchor target="issue_sidebar_releases" position="left">
         <FirstLastSeenSection group={group} />
@@ -94,6 +99,20 @@ export default function StreamlinedSidebar({group, event, project}: Props) {
       )}
     </Side>
   );
+
+  const {element: tourSidebar} = useRegisterIssueDetailsTourStep({
+    focusedElement: sidebarComponent,
+    step: {
+      id: IssueDetailsTour.ISSUE_DETAILS_SIDEBAR,
+      title: t('Share updates'),
+      description: t(
+        'Leave a comment for a teammate or link your favorite ticketing system - this area helps you collaborate and track progress on the issue.'
+      ),
+    },
+    position: 'left-start',
+  });
+
+  return tourSidebar;
 }
 
 const StyledBreak = styled('hr')`

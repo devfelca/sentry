@@ -1,4 +1,3 @@
-import {Fragment} from 'react';
 import {ClassNames, useTheme} from '@emotion/react';
 import styled from '@emotion/styled';
 
@@ -13,20 +12,17 @@ import type {
 import {IconClose} from 'sentry/icons';
 import {t} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
-
-const TOUR_ELEMENT_CLASS = '__active_tour_element';
+import type {UseHoverOverlayProps} from 'sentry/utils/useHoverOverlay';
 
 export function TourBlurContainer({children}: {children: React.ReactNode}) {
   const {tour} = useIssueDetailsTour();
   const isTourActive = tour.currentStep !== null;
 
   return (
-    <Fragment>
-      <BlurContainer>
-        {children}
-        {isTourActive && <BlurWindow />}
-      </BlurContainer>
-    </Fragment>
+    <BlurContainer>
+      {children}
+      {isTourActive && <BlurWindow />}
+    </BlurContainer>
   );
 }
 
@@ -34,12 +30,14 @@ export interface TourElementProps<T extends TourEnumType> {
   children: React.ReactNode;
   step: TourStep<T>;
   tourContext: TourContextType<T>;
+  position?: UseHoverOverlayProps['position'];
 }
 
 export function TourElement<T extends TourEnumType>({
   children,
   step,
   tourContext,
+  position,
 }: TourElementProps<T>) {
   const theme = useTheme();
   const {tour, dispatch} = tourContext;
@@ -59,6 +57,7 @@ export function TourElement<T extends TourEnumType>({
           bodyClassName={css`
             padding: ${space(1.5)} ${space(2)};
           `}
+          position={position}
           body={
             <TourContent>
               <TopRow>
@@ -92,14 +91,14 @@ export function TourElement<T extends TourEnumType>({
                   </ActionButton>
                 ) : (
                   <ActionButton size="xs" onClick={() => dispatch({type: 'END_TOUR'})}>
-                    {t('Done')}
+                    {t('Finish tour')}
                   </ActionButton>
                 )}
               </ActionRow>
             </TourContent>
           }
         >
-          <div className={TOUR_ELEMENT_CLASS}>{children}</div>
+          <TourWrapper>{children}</TourWrapper>
         </TourHovercard>
       )}
     </ClassNames>
@@ -108,17 +107,6 @@ export function TourElement<T extends TourEnumType>({
 
 const BlurContainer = styled('div')`
   position: relative;
-  .${TOUR_ELEMENT_CLASS} {
-    position: relative;
-    z-index: ${p => p.theme.zIndex.tooltip};
-    &:after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: ${p => p.theme.borderRadius};
-      box-shadow: inset 0 0 0 3px ${p => p.theme.subText};
-    }
-  }
 `;
 
 const BlurWindow = styled('div')`
@@ -129,6 +117,18 @@ const BlurWindow = styled('div')`
   user-select: none;
   backdrop-filter: blur(3px);
   overscroll-behavior: none;
+`;
+
+const TourWrapper = styled('div')`
+  position: relative;
+  z-index: ${p => p.theme.zIndex.tooltip};
+  &:after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: ${p => p.theme.borderRadius};
+    box-shadow: inset 0 0 0 3px ${p => p.theme.subText};
+  }
 `;
 
 const TourHovercard = styled(Hovercard)`
@@ -177,4 +177,5 @@ const ActionRow = styled('div')`
 
 const ActionButton = styled(Button)`
   font-size: ${p => p.theme.fontSizeSmall};
+  border: 0;
 `;

@@ -3,10 +3,13 @@ import styled from '@emotion/styled';
 
 import * as Layout from 'sentry/components/layouts/thirds';
 import {
+  IssueDetailsTour,
   IssueDetailsTourContext,
   useIssueDetailsTourReducer,
+  useRegisterIssueDetailsTourStep,
 } from 'sentry/components/tours/issueDetails';
 import {TourBlurContainer} from 'sentry/components/tours/styles';
+import {t} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
 import type {Event} from 'sentry/types/event';
 import type {Group} from 'sentry/types/group';
@@ -46,10 +49,7 @@ export function GroupDetailsLayout({
   });
   const isScreenSmall = useMedia(`(max-width: ${theme.breakpoints.large})`);
   const shouldDisplaySidebar = issueDetails.isSidebarOpen || isScreenSmall;
-  const issueTypeConfig = getConfigForIssueType(group, group.project);
   const groupReprocessingStatus = getGroupReprocessingStatus(group);
-
-  const hasFilterBar = issueTypeConfig.header.filterBar.enabled;
 
   return (
     <IssueDetailsContext.Provider
@@ -67,17 +67,9 @@ export function GroupDetailsLayout({
             data-test-id="group-event-details"
             sidebarOpen={issueDetails.isSidebarOpen}
           >
-            <div>
-              <EventDetailsHeader event={event} group={group} project={project} />
-              <GroupContent>
-                <NavigationSidebarWrapper hasToggleSidebar={!hasFilterBar}>
-                  <IssueEventNavigation event={event} group={group} />
-                  {/* Since the event details header is disabled, display the sidebar toggle here */}
-                  {!hasFilterBar && <ToggleSidebar size="sm" />}
-                </NavigationSidebarWrapper>
-                <ContentPadding>{children}</ContentPadding>
-              </GroupContent>
-            </div>
+            <GroupDetailsContent event={event} group={group} project={project}>
+              {children}
+            </GroupDetailsContent>
             {shouldDisplaySidebar ? (
               <StreamlinedSidebar group={group} event={event} project={project} />
             ) : null}
@@ -85,6 +77,56 @@ export function GroupDetailsLayout({
         </TourBlurContainer>
       </IssueDetailsTourContext.Provider>
     </IssueDetailsContext.Provider>
+  );
+}
+
+function GroupDetailsContent({event, group, project, children}: GroupDetailsLayoutProps) {
+  const issueTypeConfig = getConfigForIssueType(group, group.project);
+  const hasFilterBar = issueTypeConfig.header.filterBar.enabled;
+
+  const filterComponent = (
+    <EventDetailsHeader event={event} group={group} project={project} />
+  );
+
+  const {element: tourAggregate} = useRegisterIssueDetailsTourStep({
+    focusedElement: filterComponent,
+    step: {
+      id: IssueDetailsTour.ISSUE_DETAILS_AGGREGATES,
+      title: t('View data in aggregate'),
+      description: t(
+        'The top section of the page always displays data in aggregate, including trends over time or tag value distributions.'
+      ),
+    },
+    position: 'bottom',
+  });
+
+  const eventDetailsComponent = (
+    <GroupContent>
+      <NavigationSidebarWrapper hasToggleSidebar={!hasFilterBar}>
+        <IssueEventNavigation event={event} group={group} />
+        {/* Since the event details header is disabled, display the sidebar toggle here */}
+        {!hasFilterBar && <ToggleSidebar size="sm" />}
+      </NavigationSidebarWrapper>
+      <ContentPadding>{children}</ContentPadding>
+    </GroupContent>
+  );
+
+  const {element: tourContent} = useRegisterIssueDetailsTourStep({
+    focusedElement: eventDetailsComponent,
+    step: {
+      id: IssueDetailsTour.ISSUE_DETAILS_EVENT_DETAILS,
+      title: t('Explore event details'),
+      description: t(
+        'Here we capture everything we know about this error event, including the stack trace, breadcrumbs, replay, trace, context, and tags.'
+      ),
+    },
+  });
+
+  return (
+    <div>
+      {tourAggregate}
+      {tourContent}
+    </div>
   );
 }
 

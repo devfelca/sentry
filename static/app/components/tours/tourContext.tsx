@@ -9,6 +9,7 @@ import {
 import {useReducer} from 'react';
 
 import {TourElement} from 'sentry/components/tours/styles';
+import type {UseHoverOverlayProps} from 'sentry/utils/useHoverOverlay';
 
 export type TourEnumType = string | number;
 
@@ -59,21 +60,13 @@ export type TourAction<T extends TourEnumType> =
 
 export interface TourState<T extends TourEnumType> {
   /**
-   * The current active tour step.
+   * The current active tour step. If this is null, the tour is not active.
    */
   currentStep: TourStep<T> | null;
-  /**
-   * Whether the tour is currently active.
-   */
-  isActive: boolean;
   /**
    * Whether the tour is available to the user. Should be set by flags or other conditions.
    */
   isAvailable: boolean;
-  /**
-   * Whether each step in the tour has been completely registered in the DOM.
-   */
-  isRegistered: boolean;
   /**
    * The ordered step IDs. Declared once when the provider is initialized.
    */
@@ -91,34 +84,28 @@ export function useTourReducer<T extends TourEnumType>({
     orderedStepIds,
     currentStep: null,
     isAvailable: false,
-    isActive: false,
-    isRegistered: false,
     ...initialState,
   };
   const {registry, setRegistry} = useTourRegistry<T>({stepsIds: orderedStepIds});
+  const isCompletelyRegistered = Object.values(registry).every(Boolean);
   const reducer: Reducer<TourState<T>, TourAction<T>> = useCallback(
     (state, action) => {
       const completeTourState = {
         ...state,
         isActive: false,
         currentStep: null,
-        currentStepIndex: -1,
       };
       switch (action.type) {
-        case 'REGISTER_STEP':
-          // Register the single step
+        case 'REGISTER_STEP': {
           setRegistry(prev => ({...prev, [action.step.id]: action.step}));
-          // If all steps are registered, set the tour as registered
-          if (Object.values(registry).every(Boolean)) {
-            return {...state, isRegistered: true};
-          }
-          // If the step is not registered, do nothing
           return state;
+        }
         case 'START_TOUR': {
-          // If the tour is not available, or all steps are not registered, do nothing
-          if (!state.isAvailable || !state.isRegistered) {
+          // If the tour is not available, or not all steps are registered, do nothing
+          if (!state.isAvailable || !isCompletelyRegistered) {
             return state;
           }
+
           // If the stepId is provided, set the current step to the stepId
           const startStepIndex = action.stepId
             ? orderedStepIds.indexOf(action.stepId)
@@ -127,7 +114,6 @@ export function useTourReducer<T extends TourEnumType>({
             return {
               ...state,
               currentStep: registry[action.stepId] ?? null,
-              currentStepIndex: startStepIndex,
             };
           }
           // If no stepId is provided, set the current step to the first step
@@ -135,9 +121,9 @@ export function useTourReducer<T extends TourEnumType>({
             return {
               ...state,
               currentStep: registry[orderedStepIds[0]] ?? null,
-              currentStepIndex: 0,
             };
           }
+
           return state;
         }
         case 'NEXT_STEP': {
@@ -150,7 +136,6 @@ export function useTourReducer<T extends TourEnumType>({
             return {
               ...state,
               currentStep: registry[nextStepId] ?? null,
-              currentStepIndex: nextStepIndex,
             };
           }
           // If there is no next step, complete the tour
@@ -166,10 +151,9 @@ export function useTourReducer<T extends TourEnumType>({
             return {
               ...state,
               currentStep: registry[prevStepId] ?? null,
-              currentStepIndex: prevStepIndex,
             };
           }
-          // If there is no previous step, do nothingz
+          // If there is no previous step, do nothing
           return state;
         }
         case 'END_TOUR':
@@ -179,22 +163,18 @@ export function useTourReducer<T extends TourEnumType>({
           if (setStepIndex === -1) {
             return state;
           }
-          return {...state, currentStep: action.step, currentStepIndex: setStepIndex};
+          return {...state, currentStep: action.step};
         }
         default:
           return state;
       }
     },
-    [registry, setRegistry, orderedStepIds]
+    [registry, setRegistry, orderedStepIds, isCompletelyRegistered]
   );
 
   const [tour, dispatch] = useReducer(reducer, initState);
 
-  return {
-    tour,
-    registry,
-    dispatch,
-  };
+  return {tour, registry, dispatch};
 }
 
 export interface TourContextType<T extends TourEnumType> {
@@ -217,15 +197,19 @@ export function useTourRegistry<T extends TourEnumType>({stepsIds}: {stepsIds: T
   return {registry, setRegistry};
 }
 
+export interface UseRegisterTourStepProps<T extends TourEnumType> {
+  focusedElement: React.ReactNode;
+  step: TourStep<T>;
+  tourContext: TourContextType<T>;
+  position?: UseHoverOverlayProps['position'];
+}
+
 export function useRegisterTourStep<T extends TourEnumType>({
   focusedElement,
   step: rawStep,
   tourContext,
-}: {
-  focusedElement: React.ReactNode;
-  step: TourStep<T>;
-  tourContext: TourContextType<T>;
-}): {
+  position,
+}: UseRegisterTourStepProps<T>): {
   element: React.ReactNode;
 } {
   // Memoize the step object to prevent it from changing on every render
@@ -242,12 +226,11 @@ export function useRegisterTourStep<T extends TourEnumType>({
     dispatch({type: 'REGISTER_STEP', step});
   }, [step, dispatch]);
 
-  const isActiveStep =
-    tour.isAvailable && tour.isRegistered && tour?.currentStep?.id === step.id;
+  const isActiveStep = tour?.currentStep?.id === step.id;
 
   // Return a callback that renders the element wrapped if the tour is active, registered and matches the step
   const element = isActiveStep ? (
-    <TourElement step={step} tourContext={tourContext}>
+    <TourElement step={step} tourContext={tourContext} position={position}>
       {focusedElement}
     </TourElement>
   ) : (

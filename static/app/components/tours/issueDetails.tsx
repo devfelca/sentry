@@ -3,33 +3,33 @@ import {createContext, useContext} from 'react';
 import {
   type TourContextType,
   type TourState,
-  type TourStep,
   useRegisterTourStep,
+  type UseRegisterTourStepProps,
   useTourReducer,
 } from 'sentry/components/tours/tourContext';
 
 export const enum IssueDetailsTour {
-  /** Onboarding for issue name, type, culprit, message, area */
-  ISSUE_DETAILS_HEADER = 'issue-details-header',
+  /** Onboarding for trends and aggregates, the graph, and tag distributions */
+  ISSUE_DETAILS_AGGREGATES = 'issue-details-aggregates',
+  /** Onboarding for date/time/environment filters */
+  ISSUE_DETAILS_FILTERS = 'issue-details-filters',
+  /** Onboarding for event details, event navigation, main page content */
+  ISSUE_DETAILS_EVENT_DETAILS = 'issue-details-event-details',
+  /** Onboarding for event navigation; next/previous, first/last/recommended events */
+  ISSUE_DETAILS_NAVIGATION = 'issue-details-navigation',
   /** Onboarding for workflow actions; resolution, archival, assignment, priority, etc. */
   ISSUE_DETAILS_WORKFLOWS = 'issue-details-workflows',
   /** Onboarding for activity log, issue tracking, solutions hub area */
   ISSUE_DETAILS_SIDEBAR = 'issue-details-sidebar',
-  /** Onboarding for date/time/environment filters */
-  ISSUE_DETAILS_FILTERS = 'issue-details-filters',
-  /** Onboarding for trends and aggregates, the graph, and tag distributions */
-  ISSUE_DETAILS_TRENDS = 'issue-details-trends',
-  /** Onboarding for event details, event navigation, main page content */
-  ISSUE_DETAILS_EVENT_DETAILS = 'issue-details-event-details',
 }
 
 const ORDERED_ISSUE_DETAILS_TOUR_STEP_IDS = [
-  IssueDetailsTour.ISSUE_DETAILS_HEADER,
+  IssueDetailsTour.ISSUE_DETAILS_AGGREGATES,
+  IssueDetailsTour.ISSUE_DETAILS_FILTERS,
+  IssueDetailsTour.ISSUE_DETAILS_EVENT_DETAILS,
+  IssueDetailsTour.ISSUE_DETAILS_NAVIGATION,
   IssueDetailsTour.ISSUE_DETAILS_WORKFLOWS,
   IssueDetailsTour.ISSUE_DETAILS_SIDEBAR,
-  IssueDetailsTour.ISSUE_DETAILS_FILTERS,
-  IssueDetailsTour.ISSUE_DETAILS_TRENDS,
-  IssueDetailsTour.ISSUE_DETAILS_EVENT_DETAILS,
 ];
 
 export function useIssueDetailsTourReducer(
@@ -44,19 +44,17 @@ export function useIssueDetailsTourReducer(
 export const IssueDetailsTourContext = createContext<TourContextType<IssueDetailsTour>>({
   tour: {
     currentStep: null,
-    orderedStepIds: ORDERED_ISSUE_DETAILS_TOUR_STEP_IDS,
     isAvailable: false,
-    isActive: false,
-    isRegistered: false,
+    orderedStepIds: ORDERED_ISSUE_DETAILS_TOUR_STEP_IDS,
   },
   dispatch: () => {},
   registry: {
-    [IssueDetailsTour.ISSUE_DETAILS_HEADER]: null,
+    [IssueDetailsTour.ISSUE_DETAILS_AGGREGATES]: null,
+    [IssueDetailsTour.ISSUE_DETAILS_FILTERS]: null,
+    [IssueDetailsTour.ISSUE_DETAILS_EVENT_DETAILS]: null,
+    [IssueDetailsTour.ISSUE_DETAILS_NAVIGATION]: null,
     [IssueDetailsTour.ISSUE_DETAILS_WORKFLOWS]: null,
     [IssueDetailsTour.ISSUE_DETAILS_SIDEBAR]: null,
-    [IssueDetailsTour.ISSUE_DETAILS_FILTERS]: null,
-    [IssueDetailsTour.ISSUE_DETAILS_TRENDS]: null,
-    [IssueDetailsTour.ISSUE_DETAILS_EVENT_DETAILS]: null,
   },
 });
 
@@ -64,17 +62,9 @@ export function useIssueDetailsTour(): TourContextType<IssueDetailsTour> {
   return useContext(IssueDetailsTourContext);
 }
 
-export function useRegisterIssueDetailsTourStep({
-  step,
-  focusedElement,
-}: {
-  focusedElement: React.ReactNode;
-  step: TourStep<IssueDetailsTour>;
-}) {
+export function useRegisterIssueDetailsTourStep(
+  props: Omit<UseRegisterTourStepProps<IssueDetailsTour>, 'tourContext'>
+) {
   const tourContext = useIssueDetailsTour();
-  return useRegisterTourStep<IssueDetailsTour>({
-    focusedElement,
-    step,
-    tourContext,
-  });
+  return useRegisterTourStep<IssueDetailsTour>({...props, tourContext});
 }

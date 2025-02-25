@@ -1,4 +1,11 @@
-import {type Dispatch, type Reducer, useCallback, useEffect, useState} from 'react';
+import {
+  type Dispatch,
+  type Reducer,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {useReducer} from 'react';
 
 import {TourElement} from 'sentry/components/tours/styles';
@@ -212,15 +219,21 @@ export function useTourRegistry<T extends TourEnumType>({stepsIds}: {stepsIds: T
 
 export function useRegisterTourStep<T extends TourEnumType>({
   focusedElement,
-  step,
+  step: rawStep,
   tourContext,
 }: {
   focusedElement: React.ReactNode;
   step: TourStep<T>;
   tourContext: TourContextType<T>;
 }): {
-  renderElement: () => React.ReactNode;
+  element: React.ReactNode;
 } {
+  // Memoize the step object to prevent it from changing on every render
+  const step: TourStep<T> = useMemo(
+    () => ({id: rawStep.id, title: rawStep.title, description: rawStep.description}),
+    [rawStep.id, rawStep.title, rawStep.description]
+  );
+
   // Use the dispatch and tour state from the props context
   const {tour, dispatch} = tourContext;
 
@@ -233,14 +246,12 @@ export function useRegisterTourStep<T extends TourEnumType>({
     tour.isAvailable && tour.isRegistered && tour?.currentStep?.id === step.id;
 
   // Return a callback that renders the element wrapped if the tour is active, registered and matches the step
-  const renderElement = useCallback(() => {
-    return isActiveStep ? (
-      <TourElement step={step} tourContext={tourContext}>
-        {focusedElement}
-      </TourElement>
-    ) : (
-      focusedElement
-    );
-  }, [focusedElement, step, tourContext, isActiveStep]);
-  return {renderElement};
+  const element = isActiveStep ? (
+    <TourElement step={step} tourContext={tourContext}>
+      {focusedElement}
+    </TourElement>
+  ) : (
+    focusedElement
+  );
+  return {element};
 }

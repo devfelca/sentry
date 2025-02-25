@@ -102,7 +102,7 @@ export default function StreamlinedGroupHeader({
     );
   }, [event, group, project, disableActions, isComplete]);
 
-  const {renderElement: renderTourActionBar} = useRegisterIssueDetailsTourStep({
+  const {element: tourActionBar} = useRegisterIssueDetailsTourStep({
     focusedElement: actionBar,
     step: {
       id: IssueDetailsTour.ISSUE_DETAILS_HEADER,
@@ -248,7 +248,7 @@ export default function StreamlinedGroupHeader({
           )}
         </HeaderGrid>
       </Header>
-      {renderTourActionBar()}
+      {tourActionBar}
     </Fragment>
   );
 }

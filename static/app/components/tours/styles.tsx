@@ -49,7 +49,6 @@ export function TourElement<T extends TourEnumType>({
     : -1;
   const hasPreviousStep = currentStepIndex > 0;
   const hasNextStep = currentStepIndex < orderedStepIds.length - 1;
-
   return (
     <ClassNames>
       {({css}) => (
@@ -64,11 +63,7 @@ export function TourElement<T extends TourEnumType>({
             <TourContent>
               <TopRow>
                 <div>
-                  {currentStepIndex > 0 ? (
-                    <span>
-                      {currentStepIndex + 1}/{orderedStepIds.length}
-                    </span>
-                  ) : null}
+                  {currentStepIndex + 1}/{orderedStepIds.length}
                 </div>
                 <div>
                   <TourCloseButton
@@ -91,9 +86,13 @@ export function TourElement<T extends TourEnumType>({
                     {t('Previous')}
                   </ActionButton>
                 )}
-                {hasNextStep && (
+                {hasNextStep ? (
                   <ActionButton size="xs" onClick={() => dispatch({type: 'NEXT_STEP'})}>
                     {t('Next')}
+                  </ActionButton>
+                ) : (
+                  <ActionButton size="xs" onClick={() => dispatch({type: 'END_TOUR'})}>
+                    {t('Done')}
                   </ActionButton>
                 )}
               </ActionRow>
@@ -128,8 +127,8 @@ const BlurWindow = styled('div')`
   content: '';
   z-index: ${p => p.theme.zIndex.modal};
   user-select: none;
-  user-zoom: none;
   backdrop-filter: blur(3px);
+  overscroll-behavior: none;
 `;
 
 const TourHovercard = styled(Hovercard)`

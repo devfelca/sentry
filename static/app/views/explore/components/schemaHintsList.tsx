@@ -1,13 +1,17 @@
-import {useMemo} from 'react';
+import {useCallback, useMemo} from 'react';
 import styled from '@emotion/styled';
 
 import {Button} from 'sentry/components/button';
 import {getHasTag} from 'sentry/components/events/searchBar';
 import {getFunctionTags} from 'sentry/components/performance/spanSearchQueryBuilder';
-import {t} from 'sentry/locale';
+import {t, tct} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
-import type {TagCollection} from 'sentry/types/group';
-import type {AggregationKey} from 'sentry/utils/fields';
+import type {Tag, TagCollection} from 'sentry/types/group';
+import {type AggregationKey, FieldKind} from 'sentry/utils/fields';
+import {
+  useExploreQuery,
+  useSetExploreQuery,
+} from 'sentry/views/explore/contexts/pageParamsContext';
 
 interface SchemaHintsListProps {
   numberTags: TagCollection;
@@ -20,6 +24,9 @@ function SchemaHintsList({
   numberTags,
   stringTags,
 }: SchemaHintsListProps) {
+  const query = useExploreQuery();
+  const setQuery = useSetExploreQuery();
+
   const functionTags = useMemo(() => {
     return getFunctionTags(supportedAggregates);
   }, [supportedAggregates]);
@@ -29,6 +36,8 @@ function SchemaHintsList({
     tags.has = getHasTag({...stringTags});
     return tags;
   }, [numberTags, stringTags, functionTags]);
+
+  // TODO: need to sort them by section to have same order as in the query builder
 
   const filterTagsWithoutTagPrefix = useMemo(() => {
     return Object.keys(filterTags)
@@ -41,15 +50,30 @@ function SchemaHintsList({
     return filterTagsWithoutTagPrefix.slice(0, 8);
   }, [filterTagsWithoutTagPrefix]);
 
-  const tagHintsText = useMemo(() => {
-    return first8Tags.map(tag => `${tag?.key} is ...`);
-  }, [first8Tags]);
+  const handleHintSelected = useCallback(
+    (hint: Tag | undefined) => {
+      if (!hint) {
+        return;
+      }
+      if (hint.kind === FieldKind.MEASUREMENT) {
+        setQuery(`${query} ${hint.key}:>0`);
+      } else {
+        setQuery(`${query} ${hint.key}:""`);
+      }
+    },
+    [query, setQuery]
+  );
 
   return (
     <SchemaHintsContainer>
       <HintsWrapper>
-        {tagHintsText.map(text => (
-          <SchemaHintOption key={text}>{text}</SchemaHintOption>
+        {first8Tags.map(tag => (
+          <SchemaHintOption key={tag?.key} onClick={() => handleHintSelected(tag)}>
+            {tct(`[tag] [operator] ...`, {
+              tag: tag?.key,
+              operator: tag?.kind === FieldKind.MEASUREMENT ? '>' : 'is',
+            })}
+          </SchemaHintOption>
         ))}
       </HintsWrapper>
       <SchemaHintOption style={{flexShrink: 0}}>{t('See full list')}</SchemaHintOption>

@@ -80,7 +80,7 @@ export function EventDetailsHeader({group, event, project}: EventDetailsHeaderPr
         hasFilterBar={issueTypeConfig.header.filterBar.enabled}
       >
         {issueTypeConfig.header.filterBar.enabled && (
-          <TourElement
+          <TourElement<IssueDetailsTour>
             tourContext={IssueDetailsTourContext}
             id={IssueDetailsTour.FILTERS}
             title={t('Narrow your focus')}

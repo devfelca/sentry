@@ -198,7 +198,7 @@ export default function StreamlinedGroupHeader({
           )}
         </HeaderGrid>
       </Header>
-      <TourElement
+      <TourElement<IssueDetailsTour>
         tourContext={IssueDetailsTourContext}
         id={IssueDetailsTour.WORKFLOWS}
         title={t('Take action')}

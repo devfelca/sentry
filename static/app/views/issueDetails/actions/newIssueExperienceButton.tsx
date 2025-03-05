@@ -135,7 +135,7 @@ export function NewIssueExperienceButton() {
   if (isTourAvailable && isTourRegistered) {
     items.unshift({
       key: 'start-tour',
-      label: t('Take a tour of the issue experience'),
+      label: t('Take a tour'),
       onAction: () => tourDispatch({type: 'START_TOUR'}),
     });
   }

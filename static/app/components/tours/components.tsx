@@ -233,6 +233,7 @@ export function TourGuide({
   const isTopRowVisible = isStepCountVisible || isDismissVisible;
   const countText = isStepCountVisible ? `${stepCount}/${stepTotal}` : '';
   const {triggerProps, overlayProps, arrowProps} = useOverlay({
+    shouldApplyMinWidth: false,
     isOpen,
     position,
     offset,

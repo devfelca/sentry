@@ -53,7 +53,7 @@ export default function StreamlinedSidebar({group, event, project}: Props) {
   const issueTypeConfig = getConfigForIssueType(group, group.project);
 
   return (
-    <TourElement
+    <TourElement<IssueDetailsTour>
       tourContext={IssueDetailsTourContext}
       id={IssueDetailsTour.SIDEBAR}
       title={t('Share updates')}

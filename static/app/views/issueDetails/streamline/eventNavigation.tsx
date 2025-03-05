@@ -192,7 +192,7 @@ export function IssueEventNavigation({event, group}: IssueEventNavigationProps) 
         />
         <LargeInThisIssueText aria-hidden>{t('in this issue')}</LargeInThisIssueText>
       </LargeDropdownButtonWrapper>
-      <TourElement
+      <TourElement<IssueDetailsTour>
         tourContext={IssueDetailsTourContext}
         id={IssueDetailsTour.NAVIGATION}
         title={t('Compare different events')}

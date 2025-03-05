@@ -8,6 +8,7 @@ import type {Event} from 'sentry/types/event';
 import type {Group} from 'sentry/types/group';
 import type {Project} from 'sentry/types/project';
 import {getConfigForIssueType} from 'sentry/utils/issueTypeConfig';
+import {useLocation} from 'sentry/utils/useLocation';
 import useMedia from 'sentry/utils/useMedia';
 import {
   IssueDetailsTour,
@@ -39,6 +40,7 @@ export function GroupDetailsLayout({
   children,
 }: GroupDetailsLayoutProps) {
   const theme = useTheme();
+  const location = useLocation();
   const {issueDetails, dispatch} = useIssueDetailsReducer();
   const isScreenSmall = useMedia(`(max-width: ${theme.breakpoints.large})`);
   const shouldDisplaySidebar = issueDetails.isSidebarOpen || isScreenSmall;
@@ -48,8 +50,8 @@ export function GroupDetailsLayout({
 
   return (
     <IssueDetailsContext.Provider value={{...issueDetails, dispatch}}>
-      <TourContextProvider
-        isAvailable
+      <TourContextProvider<IssueDetailsTour>
+        isAvailable={location.hash === '#tour'}
         isCompleted={false}
         orderedStepIds={ORDERED_ISSUE_DETAILS_TOUR}
         tourContext={IssueDetailsTourContext}
@@ -65,7 +67,7 @@ export function GroupDetailsLayout({
           sidebarOpen={issueDetails.isSidebarOpen}
         >
           <div>
-            <TourElement
+            <TourElement<IssueDetailsTour>
               tourContext={IssueDetailsTourContext}
               id={IssueDetailsTour.AGGREGATES}
               title={t('View data in aggregate')}
@@ -76,14 +78,14 @@ export function GroupDetailsLayout({
             >
               <EventDetailsHeader event={event} group={group} project={project} />
             </TourElement>
-            <TourElement
+            <TourElement<IssueDetailsTour>
               tourContext={IssueDetailsTourContext}
               id={IssueDetailsTour.EVENT_DETAILS}
               title={t('Explore event details')}
               description={t(
                 'Here we capture everything we know about this error event, including the stack trace, breadcrumbs, replay, trace, context, and tags.'
               )}
-              position="bottom"
+              position="top"
             >
               <GroupContent>
                 <NavigationSidebarWrapper hasToggleSidebar={!hasFilterBar}>

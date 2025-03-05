@@ -1,12 +1,19 @@
 import {useTheme} from '@emotion/react';
 import styled from '@emotion/styled';
 
+import {TourContextProvider, TourElement} from 'sentry/components/tours/components';
+import {t} from 'sentry/locale';
 import {space} from 'sentry/styles/space';
 import type {Event} from 'sentry/types/event';
 import type {Group} from 'sentry/types/group';
 import type {Project} from 'sentry/types/project';
 import {getConfigForIssueType} from 'sentry/utils/issueTypeConfig';
 import useMedia from 'sentry/utils/useMedia';
+import {
+  IssueDetailsTour,
+  IssueDetailsTourContext,
+  ORDERED_ISSUE_DETAILS_TOUR,
+} from 'sentry/views/issueDetails/issueDetailsTour';
 import {
   IssueDetailsContext,
   useIssueDetailsReducer,
@@ -37,36 +44,62 @@ export function GroupDetailsLayout({
   const shouldDisplaySidebar = issueDetails.isSidebarOpen || isScreenSmall;
   const issueTypeConfig = getConfigForIssueType(group, group.project);
   const groupReprocessingStatus = getGroupReprocessingStatus(group);
-
   const hasFilterBar = issueTypeConfig.header.filterBar.enabled;
 
   return (
     <IssueDetailsContext.Provider value={{...issueDetails, dispatch}}>
-      <StreamlinedGroupHeader
-        group={group}
-        event={event ?? null}
-        project={project}
-        groupReprocessingStatus={groupReprocessingStatus}
-      />
-      <StyledLayoutBody
-        data-test-id="group-event-details"
-        sidebarOpen={issueDetails.isSidebarOpen}
+      <TourContextProvider
+        isAvailable
+        isCompleted={false}
+        orderedStepIds={ORDERED_ISSUE_DETAILS_TOUR}
+        tourContext={IssueDetailsTourContext}
       >
-        <div>
-          <EventDetailsHeader event={event} group={group} project={project} />
-          <GroupContent>
-            <NavigationSidebarWrapper hasToggleSidebar={!hasFilterBar}>
-              <IssueEventNavigation event={event} group={group} />
-              {/* Since the event details header is disabled, display the sidebar toggle here */}
-              {!hasFilterBar && <ToggleSidebar size="sm" />}
-            </NavigationSidebarWrapper>
-            <ContentPadding>{children}</ContentPadding>
-          </GroupContent>
-        </div>
-        {shouldDisplaySidebar ? (
-          <StreamlinedSidebar group={group} event={event} project={project} />
-        ) : null}
-      </StyledLayoutBody>
+        <StreamlinedGroupHeader
+          group={group}
+          event={event ?? null}
+          project={project}
+          groupReprocessingStatus={groupReprocessingStatus}
+        />
+        <StyledLayoutBody
+          data-test-id="group-event-details"
+          sidebarOpen={issueDetails.isSidebarOpen}
+        >
+          <div>
+            <TourElement
+              tourContext={IssueDetailsTourContext}
+              id={IssueDetailsTour.AGGREGATES}
+              title={t('View data in aggregate')}
+              description={t(
+                'The top section of the page always displays data in aggregate, including trends over time or tag value distributions.'
+              )}
+              position="bottom"
+            >
+              <EventDetailsHeader event={event} group={group} project={project} />
+            </TourElement>
+            <TourElement
+              tourContext={IssueDetailsTourContext}
+              id={IssueDetailsTour.EVENT_DETAILS}
+              title={t('Explore event details')}
+              description={t(
+                'Here we capture everything we know about this error event, including the stack trace, breadcrumbs, replay, trace, context, and tags.'
+              )}
+              position="bottom"
+            >
+              <GroupContent>
+                <NavigationSidebarWrapper hasToggleSidebar={!hasFilterBar}>
+                  <IssueEventNavigation event={event} group={group} />
+                  {/* Since the event details header is disabled, display the sidebar toggle here */}
+                  {!hasFilterBar && <ToggleSidebar size="sm" />}
+                </NavigationSidebarWrapper>
+                <ContentPadding>{children}</ContentPadding>
+              </GroupContent>
+            </TourElement>
+          </div>
+          {shouldDisplaySidebar ? (
+            <StreamlinedSidebar group={group} event={event} project={project} />
+          ) : null}
+        </StyledLayoutBody>
+      </TourContextProvider>
     </IssueDetailsContext.Provider>
   );
 }

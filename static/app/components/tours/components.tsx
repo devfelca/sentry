@@ -359,6 +359,7 @@ const TourTriggerWrapper = styled('div')`
     &:after {
       content: '';
       position: absolute;
+      z-index: ${p => p.theme.zIndex.tour.element + 1};
       inset: 0;
       border-radius: ${p => p.theme.borderRadius};
       box-shadow: inset 0 0 0 3px ${p => p.theme.subText};

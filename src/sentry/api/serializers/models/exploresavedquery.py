@@ -26,7 +26,7 @@ class ExploreSavedQueryResponse(ExploreSavedQueryResponseOptional):
     id: str
     name: str
     projects: list[int]
-    queryDataset: str
+    dataset: str
     expired: bool
     dateCreated: str
     dateUpdated: str
@@ -74,7 +74,7 @@ class ExploreSavedQueryModelSerializer(Serializer):
             "id": str(obj.id),
             "name": obj.name,
             "projects": [project.id for project in obj.projects.all()],
-            "queryDataset": ExploreSavedQueryTypes.get_type_name(obj.dataset),
+            "dataset": ExploreSavedQueryTypes.get_type_name(obj.dataset),
             "expired": False,
             "dateCreated": obj.date_created,
             "dateUpdated": obj.date_updated,

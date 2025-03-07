@@ -181,7 +181,7 @@ class ExploreSavedQueriesEndpoint(OrganizationEndpoint):
             organization=organization,
             name=data["name"],
             query=data["query"],
-            dataset=data["query_dataset"],
+            dataset=data["dataset"],
             created_by_id=request.user.id if request.user.is_authenticated else None,
         )
 

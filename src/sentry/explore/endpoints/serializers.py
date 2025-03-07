@@ -1,9 +1,7 @@
-import sentry_sdk
 from drf_spectacular.utils import extend_schema_serializer
 from rest_framework import serializers
 from rest_framework.serializers import ListField
 
-from sentry import features
 from sentry.constants import ALL_ACCESS_PROJECTS
 from sentry.explore.models import ExploreSavedQueryTypes
 from sentry.utils.dates import parse_stats_period, validate_interval
@@ -25,10 +23,10 @@ class ExploreSavedQuerySerializer(serializers.Serializer):
         default=[],
         help_text="The saved projects filter for this query.",
     )
-    queryDataset = serializers.ChoiceField(
+    dataset = serializers.ChoiceField(
         choices=ExploreSavedQueryTypes.as_text_choices(),
         default=ExploreSavedQueryTypes.get_type_name(ExploreSavedQueryTypes.SPANS),
-        help_text="The dataset you would like to query. Note: `discover` is a **deprecated** value. The allowed values are: `error-events`, `transaction-like`",
+        help_text="The dataset you would like to query. `spans` is the only supported value for now.",
     )
     start = serializers.DateTimeField(
         required=False, allow_null=True, help_text="The saved start time for this saved query."
@@ -98,26 +96,6 @@ class ExploreSavedQuerySerializer(serializers.Serializer):
 
         return validate_project_ids(projects, self.context["params"]["project_id"])
 
-    def validate_queryDataset(self, value):
-        dataset = ExploreSavedQueryTypes.get_id_for_type_name(value)
-        if dataset == ExploreSavedQueryTypes.SPANS or dataset is None:
-            sentry_sdk.set_context(
-                "discover",
-                {
-                    "org_slug": self.context["organization"].slug,
-                },
-            )
-            sentry_sdk.capture_message("Created or updated saved query with discover dataset.")
-            if features.has(
-                "organizations:deprecate-discover-widget-type",
-                self.context["organization"],
-                actor=self.context["user"],
-            ):
-                raise serializers.ValidationError(
-                    "Attribute value `discover` is deprecated. Please use `error-events` or `transaction-like`"
-                )
-        return dataset
-
     def validate(self, data):
         query = {}
         query_keys = [
@@ -158,5 +136,5 @@ class ExploreSavedQuerySerializer(serializers.Serializer):
             "name": data["name"],
             "project_ids": data["projects"],
             "query": query,
-            "query_dataset": data["queryDataset"],
+            "dataset": ExploreSavedQueryTypes.get_id_for_type_name(data["dataset"]),
         }

@@ -6,9 +6,9 @@ import type {
   RateUnit,
   SizeUnit,
 } from 'sentry/utils/discover/fields';
+import {scaleTimeSeriesData} from 'sentry/utils/timeSeries/scaleTimeSeriesData';
 
 import type {TimeSeries} from '../../common/types';
-import {scaleTimeSeriesData} from '../scaleTimeSeriesData';
 
 export type ContinuousTimeSeriesConfig = {
   /**
@@ -40,10 +40,12 @@ export abstract class ContinuousTimeSeries<
 > {
   // Ideally both the `timeSeries` and `config` would be protected properties.
   timeSeries: Readonly<TimeSeries>;
+  #timestamps: readonly string[];
   config?: Readonly<TConfig>;
 
   constructor(timeSeries: TimeSeries, config?: TConfig) {
     this.timeSeries = timeSeries;
+    this.#timestamps = timeSeries.data.map(datum => datum.timestamp).toSorted();
     this.config = config;
   }
 
@@ -52,7 +54,7 @@ export abstract class ContinuousTimeSeries<
   }
 
   get needsColor(): boolean {
-    return Boolean(this.config?.color);
+    return !this.config?.color;
   }
 
   get dataType(): AggregationOutputType {
@@ -67,6 +69,14 @@ export abstract class ContinuousTimeSeries<
       | SizeUnit
       | RateUnit
       | null;
+  }
+
+  get start(): string | null {
+    return this.#timestamps.at(0) ?? null;
+  }
+
+  get end(): string | null {
+    return this.#timestamps.at(-1) ?? null;
   }
 
   scaleToUnit(destinationUnit: DurationUnit | SizeUnit | RateUnit | null): TimeSeries {

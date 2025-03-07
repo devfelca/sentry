@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.serializers import ListField
 
 from sentry.constants import ALL_ACCESS_PROJECTS
-from sentry.explore.models import ExploreSavedQueryTypes
+from sentry.explore.models import ExploreSavedQueryDataset
 from sentry.utils.dates import parse_stats_period, validate_interval
 
 
@@ -24,8 +24,8 @@ class ExploreSavedQuerySerializer(serializers.Serializer):
         help_text="The saved projects filter for this query.",
     )
     dataset = serializers.ChoiceField(
-        choices=ExploreSavedQueryTypes.as_text_choices(),
-        default=ExploreSavedQueryTypes.get_type_name(ExploreSavedQueryTypes.SPANS),
+        choices=ExploreSavedQueryDataset.as_text_choices(),
+        default=ExploreSavedQueryDataset.get_type_name(ExploreSavedQueryDataset.SPANS),
         help_text="The dataset you would like to query. `spans` is the only supported value for now.",
     )
     start = serializers.DateTimeField(
@@ -136,5 +136,5 @@ class ExploreSavedQuerySerializer(serializers.Serializer):
             "name": data["name"],
             "project_ids": data["projects"],
             "query": query,
-            "dataset": ExploreSavedQueryTypes.get_id_for_type_name(data["dataset"]),
+            "dataset": ExploreSavedQueryDataset.get_id_for_type_name(data["dataset"]),
         }

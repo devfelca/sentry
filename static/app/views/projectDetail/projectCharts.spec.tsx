@@ -7,10 +7,14 @@ import {render, screen, userEvent, waitFor} from 'sentry-test/reactTestingLibrar
 import type {PlatformKey} from 'sentry/types/project';
 import ProjectCharts from 'sentry/views/projectDetail/projectCharts';
 
-function renderProjectCharts(platform?: PlatformKey, chartDisplay?: string) {
+function renderProjectCharts(
+  platform?: PlatformKey,
+  chartDisplay?: string,
+  features?: [string]
+) {
   const {organization, router, project} = initializeOrg({
     organization: OrganizationFixture(),
-    projects: [{platform}],
+    projects: [{platform, features}],
     router: {
       params: {orgId: 'org-slug', projectId: 'project-slug'},
       location: {
@@ -74,6 +78,32 @@ describe('ProjectDetail > ProjectCharts', () => {
 
     expect(screen.getByText('Foreground ANR Rate')).toBeInTheDocument();
     expect(screen.getByText('ANR Rate')).toBeInTheDocument();
+  });
+
+  it('renders App Hang options for apple projects', async () => {
+    renderProjectCharts('apple', undefined, [
+      'projects:project-detail-apple-app-hang-rate',
+    ]);
+
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Display Crash Free Sessions'})
+    );
+
+    expect(screen.getByText('ANR Rate')).toBeInTheDocument();
+    expect(screen.queryByText('Foreground ANR Rate')).not.toBeInTheDocument();
+  });
+
+  it('renders App Hang options for apple-ios projects', async () => {
+    renderProjectCharts('apple-ios', undefined, [
+      'projects:project-detail-apple-app-hang-rate',
+    ]);
+
+    await userEvent.click(
+      screen.getByRole('button', {name: 'Display Crash Free Sessions'})
+    );
+
+    expect(screen.getByText('ANR Rate')).toBeInTheDocument();
+    expect(screen.queryByText('Foreground ANR Rate')).not.toBeInTheDocument();
   });
 
   it('does not render ANR options for non-compatible platforms', async () => {
